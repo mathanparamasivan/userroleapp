@@ -1,0 +1,16 @@
+spring:
+  application:
+    name: userrole
+  datasource:
+    url: jdbc:mysql://localhost:3306/userschema?useSSL=false&serverTimezone=UTC
+    username: root
+    password: Verithanam@123
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    jpa:
+      hibernate:
+        ddl-auto: update # Options: none, validate, update, create-drop
+      show-sql: true
+      database-platform: org.hibernate.dialect.MySQLDialect
+
+server:
+  port: 8084
