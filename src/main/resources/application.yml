@@ -1,6 +1,9 @@
 spring:
   application:
     name: userrole
+  jpa:
+    hibernate:
+      ddl-auto: update
   datasource:
     url: jdbc:mysql://localhost:3306/userschema?useSSL=false&serverTimezone=UTC
     username: root

@@ -1,18 +1,19 @@
 package com.i2i.userrole.service;
+
 import com.i2i.userrole.dto.UserDTO;
 import com.i2i.userrole.entity.User;
+import com.i2i.userrole.mapper.UserMapper;
 import com.i2i.userrole.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
-import java.util.Optional;
+import java.util.stream.Collectors;
 
 /**
  * Service class for managing users.
- * Contains business logic for creating, updating, deleting, and fetching users.
+ * Provides business logic for creating, updating, deleting, and fetching users.
  */
 @Service
 public class UserService {
@@ -20,105 +21,98 @@ public class UserService {
     @Autowired
     private UserRepository userRepository;
 
+    @Autowired
+    private UserMapper userMapper;
+
     /**
-     * Create a new user.
+     * Create or update a user.
      *
-     * @param userDTO the user to create
-     * @return the created UserDTO
+     * @param userDTO the user data transfer object to save
+     * @return the saved user data transfer object
      */
-    public UserDTO createUser(UserDTO userDTO) {
-        // Assuming a User entity exists and is mapped from the DTO
-        User user = new User(userDTO);
-        user = userRepository.save(user);
-        return new UserDTO(user.getId(), user.getName(), user.getMobileNumber(), user.getRole());
+    public UserDTO save(UserDTO userDTO) {
+        User user = userMapper.toEntity(userDTO);
+        User savedUser = userRepository.save(user);
+        return userMapper.toDto(savedUser);
     }
 
     /**
-     * Update an existing user.
+     * Update a user based on ID.
      *
-     * @param id the id of the user to update
+     * @param id the ID of the user to update
      * @param userDTO the updated user data
-     * @return the updated UserDTO
+     * @return the updated user data transfer object
      */
     public UserDTO updateUser(Long id, UserDTO userDTO) {
-        Optional<User> optionalUser = userRepository.findById(id);
-        if (optionalUser.isPresent()) {
-            User user = optionalUser.get();
-            user.setName(userDTO.getName());
-            user.setMobileNumber(userDTO.getMobileNumber());
-            user.setRole(userDTO.getRole());
-            user = userRepository.save(user);
-            return new UserDTO(user.getId(), user.getName(), user.getMobileNumber(), user.getRole());
+        if (!userRepository.existsById(id)) {
+            throw new RuntimeException("User not found");
         }
-        return null;  // Or throw an exception based on your needs
+        userDTO.setId(id);
+        return save(userDTO);  // Using save for both creation and updating
     }
 
     /**
-     * Get a user by ID.
+     * Fetch a user by ID.
      *
-     * @param id the id of the user
-     * @return the UserDTO if found, else null
+     * @param id the ID of the user to fetch
+     * @return the user data transfer object or null if not found
      */
     public UserDTO getUserById(Long id) {
-        Optional<User> optionalUser = userRepository.findById(id);
-        return optionalUser.map(user -> new UserDTO(user.getId(), user.getName(), user.getMobileNumber(), user.getRole()))
+        return userRepository.findById(id)
+                .map(userMapper::toDto)
                 .orElse(null);
     }
 
     /**
-     * Get all users.
+     * Fetch all users.
      *
-     * @return the list of all users
+     * @return list of all user data transfer objects
      */
     public List<UserDTO> getAllUsers() {
         List<User> users = userRepository.findAll();
         return users.stream()
-                .map(user -> new UserDTO(user.getId(), user.getName(), user.getMobileNumber(), user.getRole()))
-                .toList();
+                .map(userMapper::toDto)
+                .collect(Collectors.toList());
     }
 
     /**
-     * Get users with pagination.
+     * Fetch all users with pagination.
      *
      * @param page the page number
-     * @param size the page size
-     * @return the paginated list of users
+     * @param size the size of the page
+     * @return paginated list of user data transfer objects
      */
     public List<UserDTO> getAllUsersWithPagination(int page, int size) {
-        Pageable pageable = PageRequest.of(page, size);
-        List<User> users = userRepository.findAll(pageable).getContent();
+        List<User> users = userRepository.findAll(PageRequest.of(page, size)).getContent();
         return users.stream()
-                .map(user -> new UserDTO(user.getId(), user.getName(), user.getMobileNumber(), user.getRole()))
-                .toList();
+                .map(userMapper::toDto)
+                .collect(Collectors.toList());
     }
 
     /**
      * Delete a user by ID.
      *
-     * @param id the id of the user to delete
+     * @param id the ID of the user to delete
      */
     public void deleteUser(Long id) {
+        if (!userRepository.existsById(id)) {
+            throw new RuntimeException("User not found");
+        }
         userRepository.deleteById(id);
     }
 
     /**
-     * Patch a user by ID.
+     * Partially update a user by ID.
      *
-     * @param id the id of the user to patch
-     * @param userDTO the partially updated user data
-     * @return the patched UserDTO
+     * @param id the ID of the user to patch
+     * @param userDTO the user data to patch
+     * @return the patched user data transfer object
      */
     public UserDTO patchUser(Long id, UserDTO userDTO) {
-        Optional<User> optionalUser = userRepository.findById(id);
-        if (optionalUser.isPresent()) {
-            User user = optionalUser.get();
-            if (userDTO.getName() != null) user.setName(userDTO.getName());
-            if (userDTO.getMobileNumber() != null) user.setMobileNumber(userDTO.getMobileNumber());
-            if (userDTO.getRole() != null) user.setRole(userDTO.getRole());
-            user = userRepository.save(user);
-            return new UserDTO(user.getId(), user.getName(), user.getMobileNumber(), user.getRole());
+        if (!userRepository.existsById(id)) {
+            throw new RuntimeException("User not found");
         }
-        return null;  // Or throw an exception based on your needs
+        userDTO.setId(id);
+        return save(userDTO);  // Reusing save for patching
     }
 }
-
