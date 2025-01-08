@@ -1,17 +1,23 @@
 spring:
   application:
     name: userrole
-  jpa:
-    hibernate:
-      ddl-auto: update
+  cloud:
+    vault:
+      uri: http://127.0.0.1:8200  # Vault server URI
+      token: hvs.CAESILvggMjVuvex2YLif7VJABwQftpaKTw_8MOpY0GgzUOsGh4KHGh2cy5PYnExWHVmNkRHeE1obHJpalBWdUxCUjA  # Vault token you generated
+      authentication: token
+      kv:
+        enabled: true
+        backend: secret
+        default-context: mysql  # This should be the correct path
   datasource:
-    url: jdbc:mysql://localhost:3306/userschema?useSSL=false&serverTimezone=UTC
-    username: root
-    password: Verithanam@123
+    url: jdbc:mysql://localhost:3306/userschema?allowPublicKeyRetrieval=true&useSSL=false&serverTimezone=UTC
+    username: ${vault.secret.data.data.mysql.username}  # Corrected path
+    password: ${vault.secret.data.data.mysql.password}  # Corrected path
     driver-class-name: com.mysql.cj.jdbc.Driver
     jpa:
       hibernate:
-        ddl-auto: update # Options: none, validate, update, create-drop
+        ddl-auto: update  # Options: none, validate, update, create-drop
       show-sql: true
       database-platform: org.hibernate.dialect.MySQLDialect
 
