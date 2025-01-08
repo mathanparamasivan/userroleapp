@@ -4,7 +4,7 @@ spring:
   cloud:
     vault:
       uri: http://127.0.0.1:8200  # Vault server URI
-      token: hvs.CAESILvggMjVuvex2YLif7VJABwQftpaKTw_8MOpY0GgzUOsGh4KHGh2cy5PYnExWHVmNkRHeE1obHJpalBWdUxCUjA  # Vault token you generated
+      token: #hvs.CAESILvggMjVuvex2YLif7VJABwQftpaKTw_8MOpY0GgzUOsGh4KHGh2cy5PYnExWHVmNkRHeE1obHJpalBWdUxCUjA  # Vault token you generated
       authentication: token
       kv:
         enabled: true
@@ -12,8 +12,8 @@ spring:
         default-context: mysql  # This should be the correct path
   datasource:
     url: jdbc:mysql://localhost:3306/userschema?allowPublicKeyRetrieval=true&useSSL=false&serverTimezone=UTC
-    username: ${vault.secret.data.data.mysql.username}  # Corrected path
-    password: ${vault.secret.data.data.mysql.password}  # Corrected path
+    username: root #${vault.secret.data.data.mysql.username}  # Corrected path
+    password: Verithanam@123 #${vault.secret.data.data.mysql.password}  # Corrected path
     driver-class-name: com.mysql.cj.jdbc.Driver
     jpa:
       hibernate:
