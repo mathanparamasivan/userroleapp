@@ -4,7 +4,7 @@ spring:
   cloud:
     vault:
       uri: http://127.0.0.1:8200  # Vault server URI
-      token: #hvs.CAESILvggMjVuvex2YLif7VJABwQftpaKTw_8MOpY0GgzUOsGh4KHGh2cy5PYnExWHVmNkRHeE1obHJpalBWdUxCUjA  # Vault token you generated
+      token: #
       authentication: token
       kv:
         enabled: true
