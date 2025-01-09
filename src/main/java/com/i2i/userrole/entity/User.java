@@ -16,6 +16,10 @@ import java.time.Instant;
 @Entity
 @Table(name = "users")
 @EntityListeners(AuditingEntityListener.class)  // Enable auditing
+@NamedQueries({
+        @NamedQuery(name = "User.findByUsernameStartingWithG",
+                query = "SELECT u FROM User u WHERE u.name LIKE 'G%'")
+})
 public class User {
 
     @Id

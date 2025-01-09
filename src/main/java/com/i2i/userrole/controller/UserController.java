@@ -1,12 +1,22 @@
 package com.i2i.userrole.controller;
 
 import com.i2i.userrole.dto.UserDTO;
+import com.i2i.userrole.entity.User;
+import com.i2i.userrole.mapper.UserMapper;
+import com.i2i.userrole.repository.UserRepository;
 import com.i2i.userrole.service.UserService;
+import jakarta.transaction.Transaction;
+import jakarta.transaction.TransactionManager;
+import org.mapstruct.control.MappingControl;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.cloud.context.config.annotation.RefreshScope;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.transaction.PlatformTransactionManager;
+import org.springframework.transaction.TransactionDefinition;
+import org.springframework.transaction.TransactionStatus;
+import org.springframework.transaction.support.DefaultTransactionDefinition;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -23,10 +33,18 @@ public class UserController {
     @Value("${latest-prop}")
     private String latestProp;
 
+    @Autowired
+    private PlatformTransactionManager transactionManager;
 
 
     @Autowired
     private UserService userService;
+
+    @Autowired
+    private UserRepository userRepository;
+
+    @Autowired
+    private UserMapper mapper;
 
     /**
      * POST /api/users : Create a new user.
@@ -37,6 +55,35 @@ public class UserController {
     @PostMapping
     public ResponseEntity<UserDTO> createUser(@RequestBody UserDTO userDTO) {
         UserDTO result = userService.save(userDTO);
+        return ResponseEntity.status(HttpStatus.CREATED).body(result);
+    }
+
+    @PostMapping("/trans")
+    public ResponseEntity<UserDTO> createAndUpdateUser(@RequestBody UserDTO userDTO) {
+        DefaultTransactionDefinition def = new DefaultTransactionDefinition();
+        def.setIsolationLevel(TransactionDefinition.ISOLATION_READ_COMMITTED);
+        def.setPropagationBehavior(TransactionDefinition.PROPAGATION_REQUIRED);
+
+        TransactionStatus status = transactionManager.getTransaction(def);
+        UserDTO result = null;
+        try {
+
+            User user = userRepository.save(mapper.toEntity(userDTO));
+            if (user.getName().equals("Ganesh"))
+                throw new RuntimeException();
+
+            user.setName(user.getName() + "updated");
+            result = mapper.toDto(userRepository.save(user));
+
+            if (user.getName().equals("Rakeshupdated"))
+                throw new RuntimeException();
+
+            transactionManager.commit(status);
+        } catch (Exception e) {
+            transactionManager.rollback(status);
+            return null;
+        }
+
         return ResponseEntity.status(HttpStatus.CREATED).body(result);
     }
 
@@ -74,6 +121,20 @@ public class UserController {
     public ResponseEntity<List<UserDTO>> getAllUsers() {
         System.out.println("Latest prop:"  + latestProp);
         List<UserDTO> users = userService.getAllUsers();
+        return ResponseEntity.ok(users);
+    }
+
+    @GetMapping("/G")
+    public ResponseEntity<List<UserDTO>> getAllGUsers() {
+        System.out.println("Latest prop:"  + latestProp);
+        List<UserDTO> users = userService.getUsersStartingWithG();
+        return ResponseEntity.ok(users);
+    }
+
+    @GetMapping("/H")
+    public ResponseEntity<List<UserDTO>> getAllHUsers() {
+        System.out.println("Latest prop:"  + latestProp);
+        List<UserDTO> users = userService.getUsersStartingWithH();
         return ResponseEntity.ok(users);
     }
 

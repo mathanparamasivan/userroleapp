@@ -4,6 +4,7 @@ import com.i2i.userrole.dto.UserDTO;
 import com.i2i.userrole.entity.User;
 import com.i2i.userrole.mapper.UserMapper;
 import com.i2i.userrole.repository.UserRepository;
+import jakarta.persistence.EntityManager;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
@@ -23,6 +24,9 @@ public class UserService {
 
     @Autowired
     private UserMapper userMapper;
+
+    @Autowired
+    private  EntityManager entityManager;
 
     /**
      * Create or update a user.
@@ -58,9 +62,7 @@ public class UserService {
      * @return the user data transfer object or null if not found
      */
     public UserDTO getUserById(Long id) {
-        return userRepository.findById(id)
-                .map(userMapper::toDto)
-                .orElse(null);
+        return userMapper.toDto(entityManager.find(User.class,id));
     }
 
     /**
@@ -114,5 +116,15 @@ public class UserService {
         }
         userDTO.setId(id);
         return save(userDTO);  // Reusing save for patching
+    }
+
+    public List<UserDTO> getUsersStartingWithG() {
+        return userRepository.findByUsernameStartingWithG().stream()
+                .map(user -> userMapper.toDto(user)).collect(Collectors.toList());
+    }
+
+    public List<UserDTO> getUsersStartingWithH() {
+        return userRepository.findByUsernameStartingWithH().stream()
+                .map(user -> userMapper.toDto(user)).collect(Collectors.toList());
     }
 }
