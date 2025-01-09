@@ -1,25 +1,16 @@
 spring:
   application:
-    name: userrole
+    name: userrole  # Name of the application
   cloud:
-    vault:
-      uri: http://127.0.0.1:8200  # Vault server URI
-      token: #
-      authentication: token
-      kv:
-        enabled: true
-        backend: secret
-        default-context: mysql  # This should be the correct path
-  datasource:
-    url: jdbc:mysql://localhost:3306/userschema?allowPublicKeyRetrieval=true&useSSL=false&serverTimezone=UTC
-    username: root #${vault.secret.data.data.mysql.username}  # Corrected path
-    password: Verithanam@123 #${vault.secret.data.data.mysql.password}  # Corrected path
-    driver-class-name: com.mysql.cj.jdbc.Driver
-    jpa:
-      hibernate:
-        ddl-auto: update  # Options: none, validate, update, create-drop
-      show-sql: true
-      database-platform: org.hibernate.dialect.MySQLDialect
+    config:
+      uri: http://localhost:8888  # URI of the Spring Cloud Config Server
+  config:
+    import: configserver:http://localhost:8888  # Explicitly import the configuration from Config Server
+  profiles:
+    active: dev  # Active profile (this fetches the dev-specific configuration)
 
-server:
-  port: 8084
+management:
+  endpoints:
+    web:
+      exposure:
+        include: refresh  # Exposes the /actuator/refresh endpoint to trigger configuration refresh

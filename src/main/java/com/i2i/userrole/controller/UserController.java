@@ -3,6 +3,8 @@ package com.i2i.userrole.controller;
 import com.i2i.userrole.dto.UserDTO;
 import com.i2i.userrole.service.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.cloud.context.config.annotation.RefreshScope;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -15,7 +17,13 @@ import java.util.List;
  */
 @RestController
 @RequestMapping("/api/users")
+@RefreshScope
 public class UserController {
+
+    @Value("${latest-prop}")
+    private String latestProp;
+
+
 
     @Autowired
     private UserService userService;
@@ -64,6 +72,7 @@ public class UserController {
      */
     @GetMapping
     public ResponseEntity<List<UserDTO>> getAllUsers() {
+        System.out.println("Latest prop:"  + latestProp);
         List<UserDTO> users = userService.getAllUsers();
         return ResponseEntity.ok(users);
     }
