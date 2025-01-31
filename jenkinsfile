@@ -1,0 +1,86 @@
+pipeline {
+    agent any
+
+    environment {
+        MAVEN_HOME = tool 'maven'  // Specify your Maven installation from Jenkins global tool config
+        JAVA_HOME = tool 'JAVA 17'  // Specify your Java installation from Jenkins global tool config
+    }
+
+    stages {
+        stage('Checkout Config Server') {
+            steps {
+                // Checkout the config server repository
+                git branch: 'main', url: 'https://github.com/mathanparamasivan/config-repo.git'
+            }
+        }
+
+        stage('Build Config Server') {
+            steps {
+                script {
+                    // Example: Starting Config Server in Docker container
+                    echo "Starting Cloud Config Server..."
+
+                    // Running the Config Server (You can modify this to fit your config server setup)
+                    //sh 'docker build -t config-server .'
+                }
+            }
+        }
+
+        stage('Run Config Server') {
+            steps {
+                script {
+                    // Example: Starting Config Server in Docker container
+                    echo "Starting Cloud Config Server..."
+
+                    // Running the Config Server (You can modify this to fit your config server setup)
+                    sh 'docker run -d spring-config-server'
+                }
+            }
+        }
+
+
+        stage('Checkout Java Maven App') {
+            steps {
+                // Checkout the Java Maven application repository
+                git branch: 'main', url: 'https://github.com/mathanparamasivan/userroleapp.git'
+            }
+        }
+
+        stage('Build Maven Project') {
+            steps {
+                // Run Maven build command to build the Java app
+                sh "'${MAVEN_HOME}/bin/mvn' clean install"
+            }
+        }
+
+        stage('Run Java App') {
+            steps {
+                // Run the Java application JAR file (you can adjust this as needed)
+                echo "Running the Java application..."
+
+                // Run the app in the background using 'nohup' or '&' (detached mode)
+                sh """
+                    nohup java -jar target/your-application.jar > app.log 2>&1 &
+                    echo \$! > app.pid
+                """
+            }
+        }
+    }
+
+    post {
+        always {
+            // Clean up: stop the Config Server after the build
+            echo "Stopping Config Server..."
+            sh 'docker stop cloud-config-server'
+            sh 'docker rm cloud-config-server'
+        }
+
+        success {
+            echo "Pipeline executed successfully!"
+        }
+
+        failure {
+            echo "Pipeline execution failed!"
+        }
+    }
+}

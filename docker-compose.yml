@@ -1,0 +1,40 @@
+services:
+  mysql:
+      image: mysql:latest
+      container_name: mysql-db-container
+      environment:
+        MYSQL_ROOT_PASSWORD: rootpassword  # Root password
+        MYSQL_DATABASE: userschema        # Database to create (optional)
+      ports:
+        - "3308:3306"  # Exposes MySQL on port 3308 of the host
+      volumes:
+        - mysql-data:/var/lib/mysql  # Persistent data volume
+
+  config-server:
+    image: spring-cloud-server:latest
+    container_name: spring-cloud-config-server
+    environment:
+      SPRING_CLOUD_CONFIG_SERVER_GIT_URI: https://github.com/mathanparamasivan/central-config-repo # Replace with actual Git repo URL
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/userschema?allowPublicKeyRetrieval=true&useSSL=false&serverTimezone=UTC
+      SPRING_DATASOURCE_USERNAME: root
+      SPRING_DATASOURCE_PASSWORD: rootpassword
+      SPRING_DATASOURCE_DRIVER_CLASS_NAME: com.mysql.cj.jdbc.Driver
+      SPRING_JPA_HIBERNATE_DDL_AUTO: update
+      SPRING_JPA_SHOW_SQL: true
+      SPRING_JPA_DATABASE_PLATFORM: org.hibernate.dialect.MySQLDialect
+      SPRING_SERVER_PORT: 8888
+      LATEST_PROP: latest
+    ports:
+      - "8888:8888"
+    depends_on:
+      - mysql
+    networks:
+      - spring-network
+    restart: always
+
+networks:
+  spring-network:
+    driver: bridge
+
+volumes:
+  mysql-data:

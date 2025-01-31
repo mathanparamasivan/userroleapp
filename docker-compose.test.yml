@@ -1,0 +1,52 @@
+services:
+  # MySQL service
+  mysql:
+    image: mysql:latest
+    container_name: mysql-db-container
+    environment:
+      MYSQL_ROOT_PASSWORD: rootpassword  # Root password
+      MYSQL_DATABASE: userschema        # Database to create (optional)
+    ports:
+      - "3308:3306"  # Exposes MySQL on port 3308 of the host
+    volumes:
+      - mysql-data:/var/lib/mysql  # Persistent data volume
+
+  # Spring Cloud Config Server service
+  config-server:
+    image: spring-cloud-server:latest
+    container_name: spring-cloud-config-server
+    environment:
+      SPRING_CLOUD_CONFIG_SERVER_GIT_URI: https://github.com/mathanparamasivan/central-config-repo # Replace with actual Git repo URL
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/userschema?allowPublicKeyRetrieval=true&useSSL=false&serverTimezone=UTC
+      SPRING_DATASOURCE_USERNAME: root
+      SPRING_DATASOURCE_PASSWORD: rootpassword
+      SPRING_DATASOURCE_DRIVER_CLASS_NAME: com.mysql.cj.jdbc.Driver
+      SPRING_JPA_HIBERNATE_DDL_AUTO: update
+      SPRING_JPA_SHOW_SQL: true
+      SPRING_JPA_DATABASE_PLATFORM: org.hibernate.dialect.MySQLDialect
+      SPRING_SERVER_PORT: 8888
+      LATEST_PROP: latest
+    ports:
+      - "8888:8888"
+    depends_on:
+      - mysql
+    restart: always
+
+  # Application container
+  userrole-app:
+
+    build:
+      context: .
+      dockerfile: Dockerfile  # Specify the path to your Dockerfile if needed
+    container_name: userrole-app-container
+    environment:
+      SPRING_PROFILES_ACTIVE: test  # Set the active Spring profile to 'docker'
+      SPRING_CLOUD_CONFIG_URI: http://172.26.192.1:8888  # Set the URI for the Spring Cloud Config Server
+    ports:
+      - "8084:8084"  # Exposes app on port 8084 of the host
+    depends_on:
+      - config-server
+    restart: on-failure:3
+
+volumes:
+  mysql-data:
