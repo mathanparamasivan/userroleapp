@@ -3,9 +3,9 @@ spring:
     name: userrole  # Name of the application
   cloud:
     config:
-      uri: http://host.docker.internal:8888  # URI of the Spring Cloud Config Server
+      uri: http://localhost:8888  # URI of the Spring Cloud Config Server
   config:
-    import: configserver:http://host.docker.internal:8888  # Explicitly import the configuration from Config Server
+    import: configserver:http://localhost:8888  # Explicitly import the configuration from Config Server
   profiles:
     active: dev  # Active profile (this fetches the dev-specific configuration)
 
