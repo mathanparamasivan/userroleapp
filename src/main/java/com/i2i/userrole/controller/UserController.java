@@ -116,6 +116,12 @@ public class UserController {
      * GET /api/users : Get all users.
      *
      * @return the ResponseEntity with the list of all users
+     *
+     * {
+     *     startsWith: ,
+     *     skip,
+     *     limit
+     * }
      */
     @GetMapping
     public ResponseEntity<List<UserDTO>> getAllUsers() {

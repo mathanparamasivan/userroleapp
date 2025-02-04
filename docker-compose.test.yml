@@ -13,8 +13,8 @@ services:
 
   # Spring Cloud Config Server service
   config-server:
-    image: spring-cloud-server:latest
-    container_name: spring-cloud-config-server
+    image: config-server:latest
+    container_name: config-server
     environment:
       SPRING_CLOUD_CONFIG_SERVER_GIT_URI: https://github.com/mathanparamasivan/central-config-repo # Replace with actual Git repo URL
       SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/userschema?allowPublicKeyRetrieval=true&useSSL=false&serverTimezone=UTC
