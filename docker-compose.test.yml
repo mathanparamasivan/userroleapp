@@ -9,7 +9,9 @@ services:
     ports:
       - "3308:3306"  # Exposes MySQL on port 3308 of the host
     volumes:
-      - mysql-data:/var/lib/mysql  # Persistent data volume
+      - mysql-data:/var/lib/mysql
+    networks:
+      - userrole_default
 
   # Spring Cloud Config Server service
   config-server:
@@ -31,6 +33,8 @@ services:
     depends_on:
       - mysql
     restart: always
+    networks:
+      - userrole_default
 
   # Application container
   userrole-app:
@@ -47,6 +51,12 @@ services:
     depends_on:
       - config-server
     restart: on-failure:3
+    networks:
+      - userrole_default
 
 volumes:
   mysql-data:
+
+networks:
+  userrole_default:
+    driver: bridge
