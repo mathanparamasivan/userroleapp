@@ -28,7 +28,7 @@ public class UserDTO {
     /**
      * The role of the user.
      */
-    private UserRole role;
+    private String role;
 
     /**
      * Default constructor for UserDTO.
@@ -46,7 +46,7 @@ public class UserDTO {
      * @param mobileNumber the mobile number of the user
      * @param role         the role of the user
      */
-    public UserDTO(Long id, String name, String mobileNumber, UserRole role) {
+    public UserDTO(Long id, String name, String mobileNumber, String role) {
         this.id = id;
         this.name = name;
         this.mobileNumber = mobileNumber;
@@ -112,7 +112,7 @@ public class UserDTO {
      *
      * @return the user role
      */
-    public UserRole getRole() {
+    public String getRole() {
         return role;
     }
 
@@ -121,7 +121,7 @@ public class UserDTO {
      *
      * @param role the user role
      */
-    public void setRole(UserRole role) {
+    public void setRole(String role) {
         this.role = role;
     }
 

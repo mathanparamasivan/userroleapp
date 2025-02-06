@@ -20,6 +20,9 @@ public class MySqlDatabaseConfig {
     @Value("${spring.datasource.driver-class-name}")  // Fetch the DB driver from application.properties
     private String dbDriver;
 
+    @Value("${spring.cloud.vault.token}")  // Fetch the DB driver from application.properties
+    private String token;
+
     // WebClient Builder Bean
     @Bean
     public WebClient.Builder webClientBuilder() {
@@ -49,7 +52,7 @@ public class MySqlDatabaseConfig {
                 .build()
                 .get()
                 .uri("/v1/secret/data/mysql_vault")
-                .header("X-Vault-Token", "hvs.RAJ1TAr7TqZy0jOciaxiD2CE")// The appropriate endpoint
+                .header("X-Vault-Token", token)// The appropriate endpoint
                 .retrieve()
                 .bodyToMono(JsonNode.class);
 

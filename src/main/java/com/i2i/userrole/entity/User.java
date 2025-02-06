@@ -1,7 +1,8 @@
 package com.i2i.userrole.entity;
 
+import com.fasterxml.jackson.annotation.JsonManagedReference;
 import com.i2i.userrole.dto.UserDTO;
-import com.i2i.userrole.dto.UserRole;
+
 import jakarta.persistence.*;
 import org.springframework.data.annotation.CreatedBy;
 import org.springframework.data.annotation.LastModifiedBy;
@@ -31,8 +32,12 @@ public class User {
     @Column(name = "mobile_number")
     private String mobileNumber;
 
-    @Enumerated(EnumType.STRING)
-    private UserRole role;
+    @ManyToOne(fetch = FetchType.EAGER)
+    @JoinColumn(name = "role_id")
+    private com.i2i.userrole.entity.UserRole role;
+
+    @Column(name = "is_present")
+    private Boolean isPresent;
 
     // Audit Fields
 
@@ -71,14 +76,6 @@ public class User {
 
     // Default constructor
     public User() {
-    }
-
-    // Constructor to create User from UserDTO
-    public User(UserDTO userDTO) {
-        this.id = userDTO.getId();
-        this.name = userDTO.getName();
-        this.mobileNumber = userDTO.getMobileNumber();
-        this.role = userDTO.getRole();
     }
 
     // Getters and Setters for Audit Fields
@@ -157,6 +154,14 @@ public class User {
         this.role = role;
     }
 
+    public Boolean getPresent() {
+        return isPresent;
+    }
+
+    public void setPresent(Boolean present) {
+        isPresent = present;
+    }
+
     @Override
     public String toString() {
         return "User{" +
@@ -164,6 +169,7 @@ public class User {
                 ", name='" + name + '\'' +
                 ", mobileNumber='" + mobileNumber + '\'' +
                 ", role=" + role +
+                ", isPresent=" + isPresent +
                 ", created=" + created +
                 ", updated=" + updated +
                 ", createdBy='" + createdBy + '\'' +

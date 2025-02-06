@@ -1,7 +1,5 @@
 @echo off
 
-vault server -dev
-
 REM Stop Docker Compose containers
 docker-compose -f docker-compose.test.yml down
 

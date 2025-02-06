@@ -2,14 +2,24 @@ package com.i2i.userrole.service;
 
 import com.i2i.userrole.dto.UserDTO;
 import com.i2i.userrole.entity.User;
+import com.i2i.userrole.entity.UserRole;
 import com.i2i.userrole.mapper.UserMapper;
+import com.i2i.userrole.mapper.UserModelMapper;
 import com.i2i.userrole.repository.UserRepository;
+import com.i2i.userrole.repository.UserRoleRepository;
 import jakarta.persistence.EntityManager;
+import jakarta.persistence.EntityNotFoundException;
+import jakarta.persistence.criteria.CriteriaBuilder;
+import org.hibernate.Hibernate;
+import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
+import java.time.Instant;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 /**
@@ -28,14 +38,26 @@ public class UserService {
     @Autowired
     private  EntityManager entityManager;
 
+    @Autowired
+    private UserRoleRepository userRoleRepository;
+
+    @Autowired
+    private UserModelMapper userModelMapper;
+
+
     /**
      * Create or update a user.
      *
      * @param userDTO the user data transfer object to save
      * @return the saved user data transfer object
      */
-    public UserDTO save(UserDTO userDTO) {
-        User user = userMapper.toEntity(userDTO);
+     public UserDTO save(UserDTO userDTO) {
+        User user = new User();
+        userRoleRepository.findByRoleName(userDTO.getRole());
+        userModelMapper.getUser(userDTO, user);
+        user.setCreatedBy(getAutheticatedUserName());
+        user.setCreated(Instant.now());
+        user.setPresent(true);
         User savedUser = userRepository.save(user);
         return userMapper.toDto(savedUser);
     }
@@ -48,11 +70,18 @@ public class UserService {
      * @return the updated user data transfer object
      */
     public UserDTO updateUser(Long id, UserDTO userDTO) {
-        if (!userRepository.existsById(id)) {
+        User user = userRepository.findActiveUserById(id).orElse(null);
+        if (user == null) {
             throw new RuntimeException("User not found");
         }
-        userDTO.setId(id);
-        return save(userDTO);  // Using save for both creation and updating
+
+        userModelMapper.getUser(userDTO, user);
+        user.setId(id);
+        user.setUpdatedBy(getAutheticatedUserName());
+        user.setUpdated(Instant.now());
+        User savedUser = userRepository.save(user);
+
+        return userMapper.toDto(savedUser);  // Using save for both creation and updating
     }
 
     /**
@@ -62,7 +91,10 @@ public class UserService {
      * @return the user data transfer object or null if not found
      */
     public UserDTO getUserById(Long id) {
-        return userMapper.toDto(entityManager.find(User.class,id));
+        User user = userRepository.findById(id).orElseThrow(() -> new EntityNotFoundException("User not found"));
+        if(user == null)
+            throw new RuntimeException("User Not Found");
+        return userMapper.toDto(user);
     }
 
     /**
@@ -70,8 +102,11 @@ public class UserService {
      *
      * @return list of all user data transfer objects
      */
-    public List<UserDTO> getAllUsers() {
-        List<User> users = userRepository.findAll();
+    public List<UserDTO> getAllUsers(String prefix) {
+        List<User> users = (prefix == null ||
+                 prefix.isBlank() || !prefix.matches("[a-zA-Z]+")) ? userRepository.findAllActiveUsers():
+        userRepository.findByUsernameStartingWithPrefix(prefix);
+
         return users.stream()
                 .map(userMapper::toDto)
                 .collect(Collectors.toList());
@@ -92,39 +127,54 @@ public class UserService {
     }
 
     /**
+     * Fetch all users with pagination.
+     *
+     * @param startsWith the page number
+     * @param skip the page number
+     * @param limit the size of the page
+     * @return paginated list of user data transfer objects
+     */
+    public List<UserDTO> getAllUsersWithPagination(String startsWith, int skip, int limit) {
+        List<User> users = userRepository.findAllUsers(startsWith, limit, skip);
+        return users.stream()
+                .map(userMapper::toDto)
+                .collect(Collectors.toList());
+    }
+
+    /**
      * Delete a user by ID.
      *
      * @param id the ID of the user to delete
      */
     public void deleteUser(Long id) {
-        if (!userRepository.existsById(id)) {
+        User user = userRepository.findActiveUserById(id).orElse(null);
+        if (user == null) {
             throw new RuntimeException("User not found");
         }
-        userRepository.deleteById(id);
+
+        userRepository.deleteUserById(id);
     }
 
     /**
      * Partially update a user by ID.
      *
      * @param id the ID of the user to patch
-     * @param userDTO the user data to patch
+     * @param name the user's name to patch
      * @return the patched user data transfer object
      */
-    public UserDTO patchUser(Long id, UserDTO userDTO) {
-        if (!userRepository.existsById(id)) {
+    public UserDTO patchUser(Long id, String name) {
+        User currentUser = userRepository.findActiveUserById(id).orElse(null);
+        if (currentUser == null) {
             throw new RuntimeException("User not found");
         }
-        userDTO.setId(id);
-        return save(userDTO);  // Reusing save for patching
+
+        currentUser.setName(name);
+        currentUser.setUpdated(Instant.now());
+        currentUser.setUpdatedBy(getAutheticatedUserName());
+        return userMapper.toDto(userRepository.save(currentUser));  // Reusing save for patching
     }
 
-    public List<UserDTO> getUsersStartingWithG() {
-        return userRepository.findByUsernameStartingWithG().stream()
-                .map(user -> userMapper.toDto(user)).collect(Collectors.toList());
-    }
-
-    public List<UserDTO> getUsersStartingWithH() {
-        return userRepository.findByUsernameStartingWithH().stream()
-                .map(user -> userMapper.toDto(user)).collect(Collectors.toList());
+    private String getAutheticatedUserName() {
+        return SecurityContextHolder.getContext().getAuthentication().getName();
     }
 }

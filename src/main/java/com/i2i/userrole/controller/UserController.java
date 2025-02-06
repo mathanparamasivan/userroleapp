@@ -8,6 +8,7 @@ import com.i2i.userrole.service.UserService;
 import jakarta.transaction.Transaction;
 import jakarta.transaction.TransactionManager;
 import org.mapstruct.control.MappingControl;
+import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.cloud.context.config.annotation.RefreshScope;
@@ -36,7 +37,6 @@ public class UserController {
     @Autowired
     private PlatformTransactionManager transactionManager;
 
-
     @Autowired
     private UserService userService;
 
@@ -45,6 +45,9 @@ public class UserController {
 
     @Autowired
     private UserMapper mapper;
+
+    @Autowired
+    private ModelMapper modelMapper;
 
     /**
      * POST /api/users : Create a new user.
@@ -68,7 +71,9 @@ public class UserController {
         UserDTO result = null;
         try {
 
-            User user = userRepository.save(mapper.toEntity(userDTO));
+            User user = new User();
+            modelMapper.map(userDTO,user);
+            user = userRepository.save(user);
             if (user.getName().equals("Ganesh"))
                 throw new RuntimeException();
 
@@ -124,23 +129,9 @@ public class UserController {
      * }
      */
     @GetMapping
-    public ResponseEntity<List<UserDTO>> getAllUsers() {
+    public ResponseEntity<List<UserDTO>> getAllUsers(@RequestParam(required = false) String prefix) {
         System.out.println("Latest prop:"  + latestProp);
-        List<UserDTO> users = userService.getAllUsers();
-        return ResponseEntity.ok(users);
-    }
-
-    @GetMapping("/G")
-    public ResponseEntity<List<UserDTO>> getAllGUsers() {
-        System.out.println("Latest prop:"  + latestProp);
-        List<UserDTO> users = userService.getUsersStartingWithG();
-        return ResponseEntity.ok(users);
-    }
-
-    @GetMapping("/H")
-    public ResponseEntity<List<UserDTO>> getAllHUsers() {
-        System.out.println("Latest prop:"  + latestProp);
-        List<UserDTO> users = userService.getUsersStartingWithH();
+        List<UserDTO> users = userService.getAllUsers(prefix);
         return ResponseEntity.ok(users);
     }
 
@@ -155,6 +146,13 @@ public class UserController {
     public ResponseEntity<List<UserDTO>> getAllUsersWithPagination(
             @RequestParam int page, @RequestParam int size) {
         List<UserDTO> users = userService.getAllUsersWithPagination(page, size);
+        return ResponseEntity.ok(users);
+    }
+
+    @GetMapping("/startswith/paginated")
+    public ResponseEntity<List<UserDTO>> getUsersWithPagination(@RequestParam String startsWith,
+            @RequestParam int skip, @RequestParam int limit) {
+        List<UserDTO> users = userService.getAllUsersWithPagination(startsWith, skip, limit);
         return ResponseEntity.ok(users);
     }
 
@@ -174,12 +172,24 @@ public class UserController {
      * PATCH /api/users/{id} : Update partially an existing user.
      *
      * @param id the id of the user to patch
-     * @param userDTO the partially updated user data
+     * @param name the partially updated user data
      * @return the ResponseEntity with the updated user data
      */
-    @PatchMapping("/{id}")
-    public ResponseEntity<UserDTO> patchUser(@PathVariable Long id, @RequestBody UserDTO userDTO) {
-        UserDTO result = userService.patchUser(id, userDTO);
+    @PatchMapping("/{id}/{name}")
+    public ResponseEntity<UserDTO> patchUser(@PathVariable Long id, @PathVariable String name) {
+        UserDTO result = userService.patchUser(id, name);
         return ResponseEntity.ok(result);
     }
+
+    @ExceptionHandler(RuntimeException.class)
+    public ResponseEntity<Void> handleRunTimeException(Exception exception) {
+
+        System.out.println(exception.getMessage());
+
+        if (exception.getMessage().equalsIgnoreCase("user not found"))
+                return ResponseEntity.notFound().build();
+
+        return ResponseEntity.unprocessableEntity().build();
+    }
+
 }
