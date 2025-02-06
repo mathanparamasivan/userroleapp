@@ -21,7 +21,6 @@ public interface UserRepository extends JpaRepository<User, Long> {
     List<User> findByUsernameStartingWithPrefix(String prefix);
 
     @Query(value = "SELECT * FROM users WHERE id = ?1 AND is_present=true", nativeQuery = true)
-    @Transactional
     Optional<User> findActiveUserById(Long id);
 
     @Query(value = "SELECT * FROM users WHERE is_present=true", nativeQuery = true)

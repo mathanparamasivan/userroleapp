@@ -2,15 +2,12 @@ package com.i2i.userrole.service;
 
 import com.i2i.userrole.dto.UserDTO;
 import com.i2i.userrole.entity.User;
-import com.i2i.userrole.entity.UserRole;
 import com.i2i.userrole.mapper.UserMapper;
 import com.i2i.userrole.mapper.UserModelMapper;
 import com.i2i.userrole.repository.UserRepository;
 import com.i2i.userrole.repository.UserRoleRepository;
 import jakarta.persistence.EntityManager;
-import jakarta.persistence.EntityNotFoundException;
 import jakarta.persistence.criteria.CriteriaBuilder;
-import org.hibernate.Hibernate;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.PageRequest;
@@ -91,9 +88,11 @@ public class UserService {
      * @return the user data transfer object or null if not found
      */
     public UserDTO getUserById(Long id) {
-        User user = userRepository.findById(id).orElseThrow(() -> new EntityNotFoundException("User not found"));
+       // return userMapper.toDto(entityManager.find(User.class,id));
+        User user = userRepository.findActiveUserById(id).orElse(null);
         if(user == null)
             throw new RuntimeException("User Not Found");
+
         return userMapper.toDto(user);
     }
 
