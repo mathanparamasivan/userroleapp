@@ -32,7 +32,7 @@ public class User {
     @Column(name = "mobile_number")
     private String mobileNumber;
 
-    @ManyToOne(fetch = FetchType.EAGER)
+    @ManyToOne(fetch = FetchType.EAGER, cascade = CascadeType.ALL)
     @JoinColumn(name = "role_id")
     private com.i2i.userrole.entity.UserRole role;
 

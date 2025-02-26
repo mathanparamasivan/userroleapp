@@ -41,7 +41,7 @@ services:
 
     build:
       context: .
-      dockerfile: Dockerfile  # Specify the path to your Dockerfile if needed
+      dockerfile: dockerfile  # Specify the path to your Dockerfile if needed
     container_name: userrole-app-container
     environment:
       SPRING_PROFILES_ACTIVE: test  # Set the active Spring profile to 'docker'

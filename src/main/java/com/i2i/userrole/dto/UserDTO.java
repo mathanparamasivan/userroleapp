@@ -1,5 +1,7 @@
 package com.i2i.userrole.dto;
 
+import java.io.Serializable;
+
 /**
  * Data Transfer Object for the User class.
  * Used to transfer user data between different layers of the application.
@@ -8,7 +10,7 @@ package com.i2i.userrole.dto;
  * @author mathanpandi.p
  * @created 7/1/2025
  */
-public class UserDTO {
+public class UserDTO implements Serializable {
 
     /**
      * The unique ID of the user.

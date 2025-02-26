@@ -10,6 +10,9 @@ import jakarta.persistence.EntityManager;
 import jakarta.persistence.criteria.CriteriaBuilder;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.CachePut;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
@@ -48,7 +51,8 @@ public class UserService {
      * @param userDTO the user data transfer object to save
      * @return the saved user data transfer object
      */
-     public UserDTO save(UserDTO userDTO) {
+    @CacheEvict(value = "users", allEntries = true)
+    public UserDTO save(UserDTO userDTO) {
         User user = new User();
         userRoleRepository.findByRoleName(userDTO.getRole());
         userModelMapper.getUser(userDTO, user);
@@ -66,6 +70,7 @@ public class UserService {
      * @param userDTO the updated user data
      * @return the updated user data transfer object
      */
+    @CacheEvict(value = "users", allEntries = true)
     public UserDTO updateUser(Long id, UserDTO userDTO) {
         User user = userRepository.findActiveUserById(id).orElse(null);
         if (user == null) {
@@ -87,8 +92,9 @@ public class UserService {
      * @param id the ID of the user to fetch
      * @return the user data transfer object or null if not found
      */
+    @Cacheable(value = "users", key="#id")
     public UserDTO getUserById(Long id) {
-       // return userMapper.toDto(entityManager.find(User.class,id));
+        System.out.println("Fetching from DB...");
         User user = userRepository.findActiveUserById(id).orElse(null);
         if(user == null)
             throw new RuntimeException("User Not Found");
@@ -101,7 +107,9 @@ public class UserService {
      *
      * @return list of all user data transfer objects
      */
+    @Cacheable(value = "users")
     public List<UserDTO> getAllUsers(String prefix) {
+        System.out.println("Fetching from DB...");
         List<User> users = (prefix == null ||
                  prefix.isBlank() || !prefix.matches("[a-zA-Z]+")) ? userRepository.findAllActiveUsers():
         userRepository.findByUsernameStartingWithPrefix(prefix);
@@ -145,6 +153,7 @@ public class UserService {
      *
      * @param id the ID of the user to delete
      */
+    @CacheEvict(value = "users", key = "#id")
     public void deleteUser(Long id) {
         User user = userRepository.findActiveUserById(id).orElse(null);
         if (user == null) {
@@ -161,6 +170,7 @@ public class UserService {
      * @param name the user's name to patch
      * @return the patched user data transfer object
      */
+    @CachePut(value = "users", key="#id")
     public UserDTO patchUser(Long id, String name) {
         User currentUser = userRepository.findActiveUserById(id).orElse(null);
         if (currentUser == null) {
