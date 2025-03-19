@@ -11,11 +11,28 @@ services:
     volumes:
       - mysql-data:/var/lib/mysql
     networks:
-      - userrole_default
+      - patient
 
+  # Redis Cache
+  redis:
+    image: redis:latest
+    container_name: redis-cache
+    ports:
+      - '6379:6379'
+    networks:
+      - patient
+
+  # HashiCorp Consul
+  consul:
+    image: hashicorp/consul:latest
+    container_name: consul-server
+    ports:
+      - '8500:8500'
+    networks:
+      - patient
   # Spring Cloud Config Server service
   config-server:
-    image: config-server:latest
+    image: mathanparamasivan/config-server:latest
     container_name: config-server
     environment:
       SPRING_CLOUD_CONFIG_SERVER_GIT_URI: https://github.com/mathanparamasivan/central-config-repo # Replace with actual Git repo URL
@@ -34,7 +51,7 @@ services:
       - mysql
     restart: always
     networks:
-      - userrole_default
+      - patient
 
   # Application container
   userrole-app:
@@ -52,11 +69,11 @@ services:
       - config-server
     restart: on-failure:3
     networks:
-      - userrole_default
+      - patient
 
 volumes:
   mysql-data:
 
 networks:
-  userrole_default:
+  patient:
     driver: bridge
