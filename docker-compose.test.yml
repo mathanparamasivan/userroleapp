@@ -1,3 +1,5 @@
+version: '3.8'
+
 services:
   # MySQL service
   mysql:
@@ -30,7 +32,36 @@ services:
       - '8500:8500'
     networks:
       - patient
-  # Spring Cloud Config Server service
+
+  # Kafka and Zookeeper
+  zookeeper:
+    image: confluentinc/cp-zookeeper:latest
+    container_name: zookeeper
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 2181
+    ports:
+      - "2181:2181"
+    networks:
+      - patient
+
+  kafka:
+    image: confluentinc/cp-kafka:latest
+    container_name: kafka-broker
+    depends_on:
+      - zookeeper
+    environment:
+      KAFKA_BROKER_ID: 1
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://localhost:29092,PLAINTEXT_HOST://localhost:9092
+      KAFKA_LISTENERS: PLAINTEXT://0.0.0.0:29092,PLAINTEXT_HOST://0.0.0.0:9092
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
+      KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
+    ports:
+      - "29092:29092"
+    networks:
+      - patient
+
+  # Spring Cloud Config Server
   config-server:
     image: mathanparamasivan/config-server:latest
     container_name: config-server
@@ -50,24 +81,6 @@ services:
     depends_on:
       - mysql
     restart: always
-    networks:
-      - patient
-
-  # Application container
-  userrole-app:
-
-    build:
-      context: .
-      dockerfile: dockerfile  # Specify the path to your Dockerfile if needed
-    container_name: userrole-app-container
-    environment:
-      SPRING_PROFILES_ACTIVE: test  # Set the active Spring profile to 'docker'
-      SPRING_CLOUD_CONFIG_URI: http://172.26.192.1:8888  # Set the URI for the Spring Cloud Config Server
-    ports:
-      - "8084:8084"  # Exposes app on port 8084 of the host
-    depends_on:
-      - config-server
-    restart: on-failure:3
     networks:
       - patient
 
